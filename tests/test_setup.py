@@ -163,6 +163,19 @@ def test_resolve_ides_prompt_parses_response():
     assert got == ["vscode", "claude"]
 
 
+def _eof_prompt(default):
+    # Simulates `curl | bash`: no readable terminal, input() raises EOFError.
+    raise EOFError
+
+
+def test_resolve_ides_prompt_eof_falls_back_to_detected():
+    assert setup.resolve_ides(None, ["cursor"], False, _eof_prompt) == ["cursor"]
+
+
+def test_resolve_ides_prompt_eof_no_detected_uses_default():
+    assert setup.resolve_ides(None, [], False, _eof_prompt) == setup.DEFAULT_IDES
+
+
 # --- ensure_env --------------------------------------------------------------
 
 def test_ensure_env_creates_from_example(tmp_path):

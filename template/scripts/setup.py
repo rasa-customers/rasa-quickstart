@@ -124,7 +124,12 @@ def resolve_ides(flag, detected, assume_yes, prompt):
         ides = list(detected) or list(DEFAULT_IDES)
     else:
         default = list(detected) or list(DEFAULT_IDES)
-        ides = parse_ides(prompt(default)) or list(default)
+        try:
+            answer = prompt(default)
+        except (EOFError, OSError):
+            # No usable terminal (e.g. `curl | bash`): take the default.
+            answer = ""
+        ides = parse_ides(answer) or list(default)
     validate_ides(ides)
     return ides
 
@@ -249,12 +254,21 @@ def _run(cmd, cwd):
 
 
 def _prompt_ides(default):
-    answer = input(
+    message = (
         "Install Rasa skills + MCP for which coding agents?\n"
         "  options: %s\n"
         "  [%s]: " % (", ".join(ALLOWED_IDES), ", ".join(default))
     )
-    return answer
+    # Read from the controlling terminal so the prompt works even when stdin
+    # is the script itself (e.g. `curl ... | bash`). Fall back to stdin; if
+    # neither is usable, raise so resolve_ides() takes the default.
+    try:
+        with open("/dev/tty", "r+") as tty:
+            tty.write(message)
+            tty.flush()
+            return tty.readline()
+    except OSError:
+        return input(message)
 
 
 # --- orchestration -----------------------------------------------------------
