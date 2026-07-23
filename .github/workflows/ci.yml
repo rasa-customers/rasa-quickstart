@@ -15,7 +15,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Ruff (lint Python)
-        run: uvx ruff check template/scripts tests
+        run: uvx ruff check template/scripts scripts tests
 
       - name: ShellCheck (install.sh)
         run: shellcheck install.sh

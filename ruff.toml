@@ -1,5 +1,5 @@
 # Lint config for the quickstart *source* repo (maintainer-only, not delivered).
 
 [lint.per-file-ignores]
-# Tiny lambdas are fine as injected test doubles.
-"tests/*" = ["E731"]
+# Tiny lambdas and compact one-line fixture setup are fine in tests.
+"tests/*" = ["E731", "E702"]

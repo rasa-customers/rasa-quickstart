@@ -1,0 +1,53 @@
+name: scaffold-refresh
+
+# Weekly: regenerate the CALM scaffold with the pinned Rasa version and open a
+# PR if `rasa init`'s output has drifted from the committed template/. Keeps
+# the delivered scaffold in sync with what users actually install.
+#
+# Requires repo secret: RASA_LICENSE
+# Also requires "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      RASA_LICENSE: ${{ secrets.RASA_LICENSE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Generate scaffold with the pinned Rasa
+        run: |
+          mkdir -p "$RUNNER_TEMP/gen"
+          ( cd template && uv run rasa init --template default \
+              --init-dir "$RUNNER_TEMP/gen" --no-prompt )
+          # We don't ship a lockfile; drop the one `uv run` just created.
+          rm -f template/uv.lock
+
+      - name: Apply any scaffold changes to template/
+        run: |
+          uv run --no-project python scripts/maintenance/refresh_scaffold.py \
+            --generated-dir "$RUNNER_TEMP/gen" --template-dir template --apply
+
+      - name: Open PR if the scaffold changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: automation/scaffold-refresh
+          title: "Refresh scaffold from `rasa init`"
+          commit-message: "Refresh template/ scaffold from `rasa init`"
+          body: |
+            Automated scaffold refresh: `rasa init --template default` output
+            has drifted from the committed `template/`. Review the diff before
+            merging.
+          add-paths: template
