@@ -78,6 +78,13 @@ def test_parse_args_rejects_unknown_provider():
         setup.parse_args(["--provider", "gemini"])
 
 
+def test_setup_source_is_ascii():
+    # Windows consoles default to cp1252; non-ASCII in printed output crashes
+    # there with UnicodeEncodeError. Keep the script ASCII-only.
+    src = pathlib.Path(setup.__file__).read_text(encoding="utf-8")
+    src.encode("ascii")
+
+
 def test_parse_args_skip_train_default_false():
     assert setup.parse_args([]).skip_train is False
 

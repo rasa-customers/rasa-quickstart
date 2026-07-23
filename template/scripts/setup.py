@@ -257,7 +257,7 @@ def main(argv=None):
     if created:
         print("Created .env from .env.example.")
     if missing:
-        print("⚠  Add these to .env before running the agent: %s" % ", ".join(missing))
+        print("! Add these to .env before running the agent: %s" % ", ".join(missing))
 
     _run(uv_sync_command(), proj)
 
@@ -271,7 +271,7 @@ def main(argv=None):
         print("Skipping `rasa train` (--skip-train).")
     else:
         _run(train_command(), proj)
-    print("\n✔  Setup complete. Try: make inspect")
+    print("\nSetup complete. Try: make inspect")
 
 
 if __name__ == "__main__":
