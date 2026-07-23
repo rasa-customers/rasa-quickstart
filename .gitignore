@@ -1,0 +1,14 @@
+# Design / planning docs — kept local, never tracked
+docs/superpowers/
+
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
