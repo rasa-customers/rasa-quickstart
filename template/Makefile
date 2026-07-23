@@ -3,6 +3,11 @@
 # pyproject.toml + .python-version on first use. Rasa auto-loads .env.
 SHELL := /bin/bash
 
+# Rasa prints Unicode; force Python UTF-8 mode so `rasa` doesn't crash on
+# Windows consoles (cp1252). Harmless on macOS/Linux.
+export PYTHONUTF8 := 1
+export PYTHONIOENCODING := utf-8
+
 .PHONY: help setup train validate run actions inspect shell skills clean
 
 help: ## Show this help

@@ -17,6 +17,7 @@ omitted flags fall back to interactive prompts:
 
 import argparse
 import io
+import os
 import pathlib
 import shutil
 import subprocess
@@ -232,9 +233,19 @@ def train_command():
     return ["uv", "run", "rasa", "train"]
 
 
+def child_env():
+    # Rasa prints Unicode (rich banners, telemetry notice); on Windows the
+    # console defaults to cp1252 and crashes with UnicodeEncodeError. Force
+    # Python UTF-8 mode for child processes (harmless on macOS/Linux).
+    env = dict(os.environ)
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
 def _run(cmd, cwd):
     print("+ %s" % " ".join(cmd))
-    subprocess.run(cmd, cwd=cwd, check=True)
+    subprocess.run(cmd, cwd=cwd, check=True, env=child_env())
 
 
 def _prompt_ides(default):

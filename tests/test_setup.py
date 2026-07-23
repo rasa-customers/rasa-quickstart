@@ -209,6 +209,13 @@ def test_provider_env_key():
 
 # --- command builders --------------------------------------------------------
 
+def test_child_env_forces_utf8():
+    # Rasa prints Unicode via rich; Windows' default cp1252 console crashes.
+    env = setup.child_env()
+    assert env["PYTHONUTF8"] == "1"
+    assert env["PYTHONIOENCODING"] == "utf-8"
+
+
 def test_uv_sync_command():
     assert setup.uv_sync_command() == ["uv", "sync"]
 
