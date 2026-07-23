@@ -1,0 +1,67 @@
+name: install-matrix
+
+# Runs the real bootstrap on every OS against the *current checkout* (via a
+# local tarball, so PRs test their own code, not main). Provisions through
+# `rasa data validate`; training is skipped (no LLM key needed).
+#
+# Requires repo secret: RASA_LICENSE
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      RASA_LICENSE: ${{ secrets.RASA_LICENSE }}
+      RASA_QUICKSTART_TARBALL: local.tar.gz
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build local tarball (GitHub-style layout)
+        shell: bash
+        run: |
+          mkdir -p _ci/rasa-quickstart-ci
+          cp -R template _ci/rasa-quickstart-ci/template
+          tar -czf local.tar.gz -C _ci rasa-quickstart-ci
+
+      - name: Bootstrap (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: bash install.sh --ides claude --yes --skip-train agent
+
+      - name: Bootstrap (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process -Force Bypass
+          ./install.ps1 -Ides claude -Yes -SkipTrain agent
+
+      - name: Assert delivered files exist
+        shell: bash
+        working-directory: agent
+        run: |
+          for f in config.yml endpoints.yml Makefile pyproject.toml .env .gitignore scripts/setup.py; do
+            test -e "$f" || { echo "missing: $f"; exit 1; }
+          done
+          test -d .claude/skills || { echo "skills not installed"; exit 1; }
+          echo "delivered files present"
+
+      - name: Validate project
+        shell: bash
+        working-directory: agent
+        run: |
+          # Ensure the license reaches rasa even though .env ships empty
+          # (later keys win in dotenv; append rather than clobber).
+          printf 'RASA_LICENSE=%s\n' "$RASA_LICENSE" >> .env
+          uv run rasa data validate
