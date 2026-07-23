@@ -2,7 +2,7 @@
 #
 # Rasa Quickstart bootstrap (macOS / Linux).
 #
-#   curl -fsSL https://raw.githubusercontent.com/rasa/rasa-quickstart/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main/install.sh | bash
 #
 # Optionally pass a target directory and setup flags:
 #
@@ -15,7 +15,7 @@
 
 set -eu
 
-REPO="${RASA_QUICKSTART_REPO:-rasa/rasa-quickstart}"
+REPO="${RASA_QUICKSTART_REPO:-rasa-customers/rasa-quickstart}"
 REF="${RASA_QUICKSTART_REF:-main}"
 DRY_RUN="${DRY_RUN:-}"
 

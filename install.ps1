@@ -2,7 +2,7 @@
 #
 # Rasa Quickstart bootstrap (Windows / PowerShell).
 #
-#   irm https://raw.githubusercontent.com/rasa/rasa-quickstart/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main/install.ps1 | iex
 #
 # With options (note the & { ... } wrapper needed when piping to iex):
 #
@@ -24,7 +24,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Repo = if ($env:RASA_QUICKSTART_REPO) { $env:RASA_QUICKSTART_REPO } else { "rasa/rasa-quickstart" }
+$Repo = if ($env:RASA_QUICKSTART_REPO) { $env:RASA_QUICKSTART_REPO } else { "rasa-customers/rasa-quickstart" }
 $Ref = if ($env:RASA_QUICKSTART_REF) { $env:RASA_QUICKSTART_REF } else { "main" }
 if ($env:DRY_RUN) { $DryRun = $true }
 

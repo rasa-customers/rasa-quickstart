@@ -51,7 +51,7 @@ def test_no_flags_forwards_bare_setup():
 def test_default_tarball_url():
     out = run([])
     assert (
-        "fetch https://github.com/rasa/rasa-quickstart/archive/refs/heads/main.tar.gz"
+        "fetch https://github.com/rasa-customers/rasa-quickstart/archive/refs/heads/main.tar.gz"
         in out
     )
 
