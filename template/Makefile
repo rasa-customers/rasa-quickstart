@@ -30,8 +30,8 @@ inspect: ## Open the CALM inspector (browser debugger)
 shell: ## Chat with the assistant in the terminal
 	uv run rasa shell
 
-skills: ## (Re)install coding-agent skills + MCP (rasa tools init skills)
-	uv run rasa tools init skills
+skills: ## (Re)install coding-agent skills + MCP (prompts; or: make skills IDES=cursor,vscode)
+	uv run rasa tools init skills $(if $(IDES),--ides $(IDES) --yes,)
 
 clean: ## Remove venv, trained models, and Rasa cache
 	rm -rf .venv models .rasa
