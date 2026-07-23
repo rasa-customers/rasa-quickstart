@@ -30,10 +30,12 @@ if ($env:DRY_RUN) { $DryRun = $true }
 
 if (-not $Target) { $Target = "rasa-quickstart" }
 
-$setupArgs = ""
-if ($Ides.Count -gt 0) { $setupArgs += " --ides " + ($Ides -join ",") }
-if ($Provider) { $setupArgs += " --provider $Provider" }
-if ($Yes) { $setupArgs += " --yes" }
+# Build an argument array for invocation, and a matching string for the plan.
+$setupArgv = @()
+if ($Ides.Count -gt 0) { $setupArgv += @("--ides", ($Ides -join ",")) }
+if ($Provider) { $setupArgv += @("--provider", $Provider) }
+if ($Yes) { $setupArgv += "--yes" }
+$setupArgs = if ($setupArgv.Count -gt 0) { " " + ($setupArgv -join " ") } else { "" }
 
 $tarball = "https://github.com/$Repo/archive/refs/heads/$Ref.tar.gz"
 
@@ -43,7 +45,9 @@ function Initialize-Uv {
     if ($DryRun) { Write-Plan "ensure uv is installed"; return }
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
         Write-Output "Installing uv..."
-        Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
+        $installer = Join-Path ([System.IO.Path]::GetTempPath()) "uv-install.ps1"
+        Invoke-WebRequest -Uri https://astral.sh/uv/install.ps1 -OutFile $installer
+        & $installer
     }
 }
 
@@ -82,7 +86,7 @@ function Initialize-GitRepo {
 function Invoke-Setup {
     if ($DryRun) { Write-Plan "(cd $Target) uv run python scripts/setup.py$setupArgs"; return }
     Push-Location $Target
-    try { Invoke-Expression "uv run python scripts/setup.py$setupArgs" } finally { Pop-Location }
+    try { & uv run python scripts/setup.py @setupArgv } finally { Pop-Location }
 }
 
 Initialize-Uv

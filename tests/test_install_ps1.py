@@ -49,7 +49,7 @@ def test_forwards_ides_provider_yes():
 
 
 def test_no_flags_forwards_bare_setup():
-    setup_line = [l for l in run(["myagent"]).splitlines() if "scripts/setup.py" in l][0]
+    setup_line = [line for line in run(["myagent"]).splitlines() if "scripts/setup.py" in line][0]
     assert "--ides" not in setup_line
     assert "--provider" not in setup_line
     assert "--yes" not in setup_line
