@@ -1,0 +1,15 @@
+[project]
+name = "rasa-quickstart-agent"
+version = "0.1.0"
+description = "A Rasa Pro (CALM) agent, ready to build on."
+requires-python = ">=3.10,<3.12"
+dependencies = [
+    "rasa-pro>=3.17.0,<3.18.0",
+    "rasa-sdk>=3.17.0,<3.18.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+]
