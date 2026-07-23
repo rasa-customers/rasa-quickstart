@@ -26,6 +26,7 @@ Usage: install.sh [--ides LIST] [--provider NAME] [--yes] [TARGET_DIR]
   --ides LIST       coding agents to wire up (e.g. claude,cursor,vscode)
   --provider NAME   LLM provider: openai (default) or anthropic
   --yes             accept detected defaults, no prompts
+  --skip-train      skip the final `rasa train`
   TARGET_DIR        directory to create (default: rasa-quickstart)
 EOF
 }
@@ -33,6 +34,7 @@ EOF
 IDES=""
 PROVIDER=""
 ASSUME_YES=""
+SKIP_TRAIN=""
 TARGET=""
 
 while [ $# -gt 0 ]; do
@@ -42,6 +44,7 @@ while [ $# -gt 0 ]; do
     --provider) PROVIDER="$2"; shift 2 ;;
     --provider=*) PROVIDER="${1#*=}"; shift ;;
     --yes|-y) ASSUME_YES="1"; shift ;;
+    --skip-train) SKIP_TRAIN="1"; shift ;;
     -h|--help) usage; exit 0 ;;
     -*) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
     *) TARGET="$1"; shift ;;
@@ -55,8 +58,10 @@ SETUP_ARGS=""
 [ -n "$IDES" ] && SETUP_ARGS="$SETUP_ARGS --ides $IDES"
 [ -n "$PROVIDER" ] && SETUP_ARGS="$SETUP_ARGS --provider $PROVIDER"
 [ -n "$ASSUME_YES" ] && SETUP_ARGS="$SETUP_ARGS --yes"
+[ -n "$SKIP_TRAIN" ] && SETUP_ARGS="$SETUP_ARGS --skip-train"
 
-TARBALL="https://github.com/$REPO/archive/refs/heads/$REF.tar.gz"
+# RASA_QUICKSTART_TARBALL lets CI (or an offline mirror) override the source.
+TARBALL="${RASA_QUICKSTART_TARBALL:-https://github.com/$REPO/archive/refs/heads/$REF.tar.gz}"
 
 plan() { echo "PLAN: $*"; }
 
@@ -82,8 +87,14 @@ fetch_template() {
   fi
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
-  echo "Downloading project..."
-  curl -fsSL "$TARBALL" | tar -xz -C "$tmp"
+  case "$TARBALL" in
+    http://*|https://*)
+      echo "Downloading project..."
+      curl -fsSL "$TARBALL" | tar -xz -C "$tmp" ;;
+    *)
+      echo "Extracting project from $TARBALL..."
+      tar -xz -C "$tmp" -f "$TARBALL" ;;
+  esac
   mkdir -p "$TARGET"
   # Tarball extracts to a single <repo>-<ref>/ directory; copy its template/.
   cp -R "$tmp"/*/template/. "$TARGET"/

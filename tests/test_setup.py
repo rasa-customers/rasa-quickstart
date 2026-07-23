@@ -78,6 +78,14 @@ def test_parse_args_rejects_unknown_provider():
         setup.parse_args(["--provider", "gemini"])
 
 
+def test_parse_args_skip_train_default_false():
+    assert setup.parse_args([]).skip_train is False
+
+
+def test_parse_args_skip_train_flag():
+    assert setup.parse_args(["--skip-train"]).skip_train is True
+
+
 # --- parse_ides / validate_ides ---------------------------------------------
 
 def test_parse_ides_normalizes():

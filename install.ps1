@@ -18,6 +18,7 @@ param(
     [string[]]$Ides = @(),
     [string]$Provider = "",
     [switch]$Yes,
+    [switch]$SkipTrain,
     [Parameter(Position = 0)][string]$Target = "",
     [switch]$DryRun
 )
@@ -35,9 +36,11 @@ $setupArgv = @()
 if ($Ides.Count -gt 0) { $setupArgv += @("--ides", ($Ides -join ",")) }
 if ($Provider) { $setupArgv += @("--provider", $Provider) }
 if ($Yes) { $setupArgv += "--yes" }
+if ($SkipTrain) { $setupArgv += "--skip-train" }
 $setupArgs = if ($setupArgv.Count -gt 0) { " " + ($setupArgv -join " ") } else { "" }
 
-$tarball = "https://github.com/$Repo/archive/refs/heads/$Ref.tar.gz"
+# RASA_QUICKSTART_TARBALL lets CI (or an offline mirror) override the source.
+$tarball = if ($env:RASA_QUICKSTART_TARBALL) { $env:RASA_QUICKSTART_TARBALL } else { "https://github.com/$Repo/archive/refs/heads/$Ref.tar.gz" }
 
 function Write-Plan($msg) { Write-Output "PLAN: $msg" }
 
@@ -62,9 +65,15 @@ function Get-ProjectTemplate {
     }
     $tmp = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString()))
     try {
-        Write-Output "Downloading project..."
         $archive = Join-Path $tmp "rq.tar.gz"
-        Invoke-WebRequest -Uri $tarball -OutFile $archive
+        if ($tarball -match '^https?://') {
+            Write-Output "Downloading project..."
+            Invoke-WebRequest -Uri $tarball -OutFile $archive
+        }
+        else {
+            Write-Output "Extracting project from $tarball..."
+            Copy-Item $tarball $archive
+        }
         tar -xz -f $archive -C $tmp
         New-Item -ItemType Directory -Force -Path $Target | Out-Null
         $inner = Get-ChildItem -Directory $tmp |

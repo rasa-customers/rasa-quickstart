@@ -70,3 +70,12 @@ def test_plan_mentions_uv_and_extract():
 def test_equals_style_flags():
     out = run(["--ides=vscode", "--provider=openai", "myagent"])
     assert "scripts/setup.py --ides vscode --provider openai" in out
+
+
+def test_forwards_skip_train():
+    assert "scripts/setup.py --skip-train" in run(["--skip-train", "myagent"])
+
+
+def test_tarball_source_override():
+    out = run([], env={"RASA_QUICKSTART_TARBALL": "/tmp/local.tar.gz"})
+    assert "fetch /tmp/local.tar.gz" in out

@@ -71,3 +71,12 @@ def test_plan_mentions_uv_and_extract():
     out = run(["myagent"])
     assert "ensure uv is installed" in out
     assert "extract template/ into myagent" in out
+
+
+def test_forwards_skip_train():
+    assert "scripts/setup.py --skip-train" in run(["-SkipTrain", "myagent"])
+
+
+def test_tarball_source_override():
+    out = run([], env={"RASA_QUICKSTART_TARBALL": "/tmp/local.tar.gz"})
+    assert "fetch /tmp/local.tar.gz" in out

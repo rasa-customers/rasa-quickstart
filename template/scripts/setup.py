@@ -82,6 +82,8 @@ def parse_args(argv):
                         help="LLM provider (default: openai)")
     parser.add_argument("--yes", action="store_true",
                         help="Accept detected defaults; no prompts")
+    parser.add_argument("--skip-train", dest="skip_train", action="store_true",
+                        help="Skip the final `rasa train` (e.g. for CI)")
     parser.add_argument("--project-path", dest="project_path", default=".",
                         help="Project directory (default: current dir)")
     return parser.parse_args(argv)
@@ -265,7 +267,10 @@ def main(argv=None):
     ides = resolve_ides(args.ides, detect_ides(), args.yes, _prompt_ides)
     _run(skills_command(ides), proj)
 
-    _run(train_command(), proj)
+    if args.skip_train:
+        print("Skipping `rasa train` (--skip-train).")
+    else:
+        _run(train_command(), proj)
     print("\n✔  Setup complete. Try: make inspect")
 
 
