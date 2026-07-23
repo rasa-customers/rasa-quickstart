@@ -24,7 +24,14 @@ with a single command. No cloning, no setup steps.
 
 ---
 
-## ⚡ Get started in ~60 seconds
+## ⚡ Get started
+
+### 1. Grab your two keys
+
+- 🔑 **Rasa license** — free with the [**Rasa Developer Edition**](https://rasa.com/docs/rasa-pro/developer-edition/). Sign up and you'll get a license key.
+- 🤖 **LLM API key** — an [**OpenAI API key**](https://platform.openai.com/api-keys) by default (Rasa supports other providers too).
+
+### 2. Run the bootstrap
 
 **macOS / Linux**
 
@@ -38,18 +45,31 @@ curl -fsSL https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main
 irm https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main/install.ps1 | iex
 ```
 
-The bootstrap installs [`uv`](https://docs.astral.sh/uv/), downloads the project,
-starts a fresh git repo, sets up a virtual environment, installs Rasa skills for
-your coding agent, and trains an initial model. Then:
+This installs [`uv`](https://docs.astral.sh/uv/), downloads the project, sets up a
+virtual environment, installs Rasa skills for your coding agent, and trains an
+initial model — into a new `rasa-quickstart/` folder.
+
+### 3. Add your keys to `.env`
 
 ```bash
 cd rasa-quickstart
-# add RASA_LICENSE and your LLM key to .env, then:
+```
+
+Open `.env` and paste in the two keys from step 1:
+
+```bash
+RASA_LICENSE=your-license-key
+OPENAI_API_KEY=your-openai-key
+```
+
+### 4. Talk to your agent
+
+```bash
 make inspect
 ```
 
-> New to Rasa? The [**Rasa Developer Edition**](https://rasa.com/docs/rasa-pro/developer-edition/)
-> is **free** and runs locally on your laptop.
+This opens the inspector in your browser, where you can chat with your assistant
+and watch its reasoning live.
 
 ---
 
