@@ -19,6 +19,8 @@ import argparse
 import io
 import os
 import pathlib
+import random
+import re
 import shutil
 import subprocess
 import sys
@@ -195,6 +197,56 @@ LICENSE_BANNER = r"""
 """
 
 
+# --- assistant id ------------------------------------------------------------
+
+# Must match the assistant_id shipped in template/config.yml (a test enforces
+# this). Every bootstrap replaces it with a random one so deployments are
+# distinguishable in telemetry/tracing; ids a user chose are never touched.
+DEFAULT_ASSISTANT_ID = "piercing-heap"
+
+_ASSISTANT_ID_LINE_RE = re.compile(r"(?m)^assistant_id:\s*(\S+)\s*$")
+
+_ID_ADJECTIVES = [
+    "amber", "bold", "brisk", "calm", "clever", "cosmic", "deft", "eager",
+    "fabled", "gentle", "keen", "lively", "lunar", "mellow", "nimble",
+    "polar", "quiet", "rapid", "solar", "sturdy", "swift", "tidal",
+    "vivid", "witty",
+]
+
+_ID_NOUNS = [
+    "anchor", "beacon", "canyon", "comet", "condor", "dolphin", "ember",
+    "falcon", "garden", "glacier", "harbor", "heron", "lantern", "meadow",
+    "nebula", "orchard", "osprey", "pines", "quartz", "river", "sparrow",
+    "summit", "tundra", "willow",
+]
+
+
+def random_assistant_id(rng=random):
+    return "%s-%s-%04x" % (
+        rng.choice(_ID_ADJECTIVES),
+        rng.choice(_ID_NOUNS),
+        rng.randrange(16 ** 4),
+    )
+
+
+def ensure_assistant_id(project_path, rng=random):
+    """Replace the template's default assistant_id with a random one.
+
+    Returns the new id, or None if the id was already customized (idempotent:
+    re-running `make setup` never overwrites an assigned or user-chosen id).
+    """
+    config_file = pathlib.Path(project_path) / "config.yml"
+    text = config_file.read_text()
+    match = _ASSISTANT_ID_LINE_RE.search(text)
+    if not match or match.group(1) != DEFAULT_ASSISTANT_ID:
+        return None
+    new_id = random_assistant_id(rng)
+    config_file.write_text(
+        text[: match.start()] + "assistant_id: " + new_id + text[match.end():]
+    )
+    return new_id
+
+
 # --- provider config rewrite -------------------------------------------------
 
 _YAML = None
@@ -310,6 +362,10 @@ def main(argv=None):
     created, missing = ensure_env(proj, ["RASA_LICENSE", llm_key])
     if created:
         print("Created .env from .env.example.")
+
+    new_id = ensure_assistant_id(proj)
+    if new_id:
+        print("Assigned assistant_id: %s" % new_id)
 
     _run(uv_sync_command(), proj)
 

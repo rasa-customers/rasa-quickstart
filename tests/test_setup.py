@@ -5,8 +5,10 @@ developer's machine. They exercise the pure logic of the setup script; the
 subprocess steps (uv sync, rasa ...) are verified by an end-to-end run.
 """
 
-import sys
 import pathlib
+import random
+import re
+import sys
 
 import pytest
 from ruamel.yaml import YAML
@@ -226,6 +228,53 @@ def test_license_banner_is_actionable():
 def test_ensure_env_without_example_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         setup.ensure_env(str(tmp_path), ["RASA_LICENSE"], environ={})
+
+
+# --- assistant id --------------------------------------------------------------
+
+TEMPLATE_DIR = pathlib.Path(__file__).resolve().parents[1] / "template"
+
+
+def test_default_assistant_id_matches_template():
+    # setup.py gates randomization on the shipped default; keep them in sync.
+    config = (TEMPLATE_DIR / "config.yml").read_text()
+    assert ("assistant_id: %s" % setup.DEFAULT_ASSISTANT_ID) in config
+
+
+def test_random_assistant_id_format():
+    aid = setup.random_assistant_id(random.Random(0))
+    assert re.fullmatch(r"[a-z]+-[a-z]+-[0-9a-f]{4}", aid)
+
+
+def test_ensure_assistant_id_replaces_default(tmp_path):
+    (tmp_path / "config.yml").write_text(
+        "recipe: default.v1\nassistant_id: %s\nlanguage: en\n"
+        % setup.DEFAULT_ASSISTANT_ID
+    )
+    new_id = setup.ensure_assistant_id(str(tmp_path), random.Random(0))
+    text = (tmp_path / "config.yml").read_text()
+    assert new_id is not None
+    assert ("assistant_id: %s" % new_id) in text
+    assert setup.DEFAULT_ASSISTANT_ID not in text
+    # the rest of the file is untouched
+    assert text.startswith("recipe: default.v1\n")
+    assert text.endswith("language: en\n")
+
+
+def test_ensure_assistant_id_keeps_custom_id(tmp_path):
+    (tmp_path / "config.yml").write_text("assistant_id: my-prod-bot\n")
+    assert setup.ensure_assistant_id(str(tmp_path)) is None
+    assert (tmp_path / "config.yml").read_text() == "assistant_id: my-prod-bot\n"
+
+
+def test_ensure_assistant_id_is_idempotent(tmp_path):
+    (tmp_path / "config.yml").write_text(
+        "assistant_id: %s\n" % setup.DEFAULT_ASSISTANT_ID
+    )
+    first = setup.ensure_assistant_id(str(tmp_path), random.Random(1))
+    assert first is not None
+    assert setup.ensure_assistant_id(str(tmp_path), random.Random(2)) is None
+    assert ("assistant_id: %s" % first) in (tmp_path / "config.yml").read_text()
 
 
 # --- provider helpers --------------------------------------------------------
