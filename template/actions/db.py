@@ -50,8 +50,8 @@ def get_contacts(session_id: str) -> List[Contact]:
 def add_contact(session_id: str, contact: Contact) -> None:
     contacts = get_contacts(session_id)
     contacts.append(contact)
-    write_db(session_id, CONTACTS, [c.dict() for c in contacts])
+    write_db(session_id, CONTACTS, [c.model_dump() for c in contacts])
 
 
 def write_contacts(session_id: str, contacts: List[Contact]) -> None:
-    write_db(session_id, CONTACTS, [c.dict() for c in contacts])
+    write_db(session_id, CONTACTS, [c.model_dump() for c in contacts])
