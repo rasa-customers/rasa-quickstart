@@ -153,6 +153,8 @@ This repo is a source/template — most of it never lands on your machine:
 `uv run --with pytest --with ruamel.yaml python -m pytest tests/`.
 The pinned Rasa version tracks the latest release over time; the committed scaffold in `template/` is kept in sync by automation.
 
+**License:** this repo (scaffold, scripts, docs) is [Apache-2.0](LICENSE). Rasa Pro itself is not part of this repo — the setup installs it from PyPI, governed by the [Developer Terms](https://rasa.com/developer-terms) and your license key.
+
 ---
 
 <div align="center">
