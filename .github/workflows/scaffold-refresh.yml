@@ -30,8 +30,12 @@ jobs:
       - name: Generate scaffold with the pinned Rasa
         run: |
           mkdir -p "$RUNNER_TEMP/gen"
-          ( cd template && uv run rasa init --template default \
-              --init-dir "$RUNNER_TEMP/gen" --no-prompt )
+          # No --no-prompt: it force-trains the initial model, which needs an
+          # OPENAI_API_KEY we don't have (and don't need — only the generated
+          # files matter). Instead answer "n" to the one prompt that fires,
+          # the training question; --init-dir on an empty dir skips the rest.
+          ( cd template && printf 'n\n' | uv run rasa init --template default \
+              --init-dir "$RUNNER_TEMP/gen" )
           # We don't ship a lockfile; drop the one `uv run` just created.
           rm -f template/uv.lock
 
