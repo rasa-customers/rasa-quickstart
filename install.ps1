@@ -50,7 +50,10 @@ function Initialize-Uv {
         Write-Output "Installing uv..."
         $installer = Join-Path ([System.IO.Path]::GetTempPath()) "uv-install.ps1"
         Invoke-WebRequest -Uri https://astral.sh/uv/install.ps1 -OutFile $installer
-        & $installer
+        try { & $installer } finally { Remove-Item $installer -ErrorAction SilentlyContinue }
+        # The installer updates the *persisted* PATH; this session doesn't see
+        # it yet, so uv would be "not recognized" without this.
+        $env:Path = "$(Join-Path $env:USERPROFILE '.local\bin');$env:Path"
     }
 }
 

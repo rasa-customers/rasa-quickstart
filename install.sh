@@ -13,7 +13,7 @@
 #
 # Set DRY_RUN=1 to print the plan without doing anything.
 
-set -eu
+set -euo pipefail
 
 REPO="${RASA_QUICKSTART_REPO:-rasa-customers/rasa-quickstart}"
 REF="${RASA_QUICKSTART_REF:-main}"
@@ -21,7 +21,7 @@ DRY_RUN="${DRY_RUN:-}"
 
 usage() {
   cat <<'EOF'
-Usage: install.sh [--ides LIST] [--provider NAME] [--yes] [TARGET_DIR]
+Usage: install.sh [--ides LIST] [--provider NAME] [--yes] [--skip-train] [TARGET_DIR]
 
   --ides LIST       coding agents to wire up (e.g. claude,cursor,vscode)
   --provider NAME   LLM provider: openai (default) or anthropic
@@ -37,11 +37,15 @@ ASSUME_YES=""
 SKIP_TRAIN=""
 TARGET=""
 
+need_value() {
+  [ $# -ge 2 ] || { echo "Missing value for $1" >&2; usage >&2; exit 2; }
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
-    --ides) IDES="$2"; shift 2 ;;
+    --ides) need_value "$@"; IDES="$2"; shift 2 ;;
     --ides=*) IDES="${1#*=}"; shift ;;
-    --provider) PROVIDER="$2"; shift 2 ;;
+    --provider) need_value "$@"; PROVIDER="$2"; shift 2 ;;
     --provider=*) PROVIDER="${1#*=}"; shift ;;
     --yes|-y) ASSUME_YES="1"; shift ;;
     --skip-train) SKIP_TRAIN="1"; shift ;;
