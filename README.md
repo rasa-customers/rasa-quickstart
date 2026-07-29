@@ -18,7 +18,7 @@ with a single command. No cloning, no setup steps.
 [![Docs](https://img.shields.io/badge/Docs-5A17EE?style=for-the-badge&logo=readthedocs&logoColor=white)](https://rasa.com/docs/)
 [![Developer Edition](https://img.shields.io/badge/Developer%20Edition-Free-5A17EE?style=for-the-badge&logo=rasa&logoColor=white)](https://rasa.com/docs/rasa-pro/developer-edition/)
 [![Learning](https://img.shields.io/badge/Learning-5A17EE?style=for-the-badge&logo=bookstack&logoColor=white)](https://learning.rasa.com/rasa-pro/)
-[![Community](https://img.shields.io/badge/Discord-5A17EE?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/vMgsuRQ7p)
+[![Community](https://img.shields.io/badge/Discord-5A17EE?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/rwhHg9PZBv)
 
 </div>
 
@@ -169,6 +169,6 @@ The pinned Rasa version tracks the latest release over time; the committed scaff
 &nbsp;&nbsp;
 [![Read the docs](https://img.shields.io/badge/📖%20Read%20the%20docs-24292F?style=for-the-badge)](https://rasa.com/docs/)
 
-<sub>Built with ❤️ by the Rasa team · <a href="https://rasa.com/">rasa.com</a> · <a href="https://discord.gg/vMgsuRQ7p">Discord community</a></sub>
+<sub>Built with ❤️ by the Rasa team · <a href="https://rasa.com/">rasa.com</a> · <a href="https://discord.gg/rwhHg9PZBv">Discord community</a></sub>
 
 </div>
