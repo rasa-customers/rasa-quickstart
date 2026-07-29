@@ -127,6 +127,5 @@ if [ -z "$DRY_RUN" ]; then
   echo ""
   echo "Done. Next:"
   echo "  cd $TARGET"
-  echo "  # add RASA_LICENSE and your LLM key to .env, then:"
-  echo "  make inspect"
+  echo "  make inspect   # or: make setup, if you still need to add keys to .env"
 fi

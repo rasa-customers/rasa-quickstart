@@ -45,9 +45,10 @@ curl -fsSL https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main
 irm https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main/install.ps1 | iex
 ```
 
-This installs [`uv`](https://docs.astral.sh/uv/), downloads the project, sets up a
-virtual environment, installs Rasa skills for your coding agent, and trains an
-initial model — into a new `rasa-quickstart/` folder.
+This installs [`uv`](https://docs.astral.sh/uv/), downloads the project into a new
+`rasa-quickstart/` folder, and sets up the virtual environment. With your keys
+already in place it also installs coding-agent skills and trains an initial
+model; without them, it pauses and tells you what to grab.
 
 ### 3. Add your keys to `.env`
 
@@ -62,9 +63,10 @@ RASA_LICENSE=your-license-key
 OPENAI_API_KEY=your-openai-key
 ```
 
-### 4. Talk to your agent
+### 4. Finish setup and talk to your agent
 
 ```bash
+make setup      # picks up your keys: installs skills + trains the first model
 make inspect
 ```
 

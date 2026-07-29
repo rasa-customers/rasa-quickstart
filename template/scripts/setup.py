@@ -145,7 +145,10 @@ def _parse_env(text):
     return values
 
 
-def ensure_env(project_path, required_keys):
+def ensure_env(project_path, required_keys, environ=None):
+    # A key counts as set if it has a value in .env OR in the process
+    # environment (rasa reads both; CI passes RASA_LICENSE as an env var).
+    environ = os.environ if environ is None else environ
     proj = pathlib.Path(project_path)
     env_file = proj / ".env"
     example = proj / ".env.example"
@@ -156,12 +159,40 @@ def ensure_env(project_path, required_keys):
         shutil.copyfile(example, env_file)
         created = True
     values = _parse_env(env_file.read_text())
-    missing = [key for key in required_keys if not values.get(key)]
+    missing = [
+        key for key in required_keys
+        if not values.get(key) and not environ.get(key)
+    ]
     return created, missing
 
 
 def provider_env_key(provider):
     return PROVIDER_PRESETS[provider]["env_key"]
+
+
+LICENSE_URL = "https://rasa.com/docs/rasa-pro/developer-edition/"
+
+# ASCII only: Windows consoles default to cp1252 and crash on fancier art.
+LICENSE_BANNER = r"""
+  +-------------------------------------------------------------------+
+  |                                                                   |
+  |      .------.                                                     |
+  |     /  .--.  \                                                    |
+  |     |  |  |  |==[]==[]==]=>    Your agent is scaffolded --        |
+  |     \  `--'  /                 it just needs its license key.     |
+  |      `------'                                                     |
+  |                                                                   |
+  |    Get a FREE Rasa Pro Developer Edition license:                 |
+  |                                                                   |
+  |      >>   https://rasa.com/docs/rasa-pro/developer-edition/       |
+  |                                                                   |
+  |    Paste it into .env as RASA_LICENSE (plus your LLM key),        |
+  |    then finish with:                                              |
+  |                                                                   |
+  |      $ make setup                                                 |
+  |                                                                   |
+  +-------------------------------------------------------------------+
+"""
 
 
 # --- provider config rewrite -------------------------------------------------
@@ -275,26 +306,36 @@ def main(argv=None):
     args = parse_args(sys.argv[1:] if argv is None else argv)
     proj = args.project_path
 
-    required = ["RASA_LICENSE", provider_env_key(args.provider)]
-    created, missing = ensure_env(proj, required)
+    llm_key = provider_env_key(args.provider)
+    created, missing = ensure_env(proj, ["RASA_LICENSE", llm_key])
     if created:
         print("Created .env from .env.example.")
-    if missing:
-        print("! Add these to .env before running the agent: %s" % ", ".join(missing))
 
     _run(uv_sync_command(), proj)
 
     if apply_provider(proj, args.provider):
         print("Configured LLM provider: %s" % args.provider)
 
+    # Every `rasa` command is license-gated, so without RASA_LICENSE the
+    # skills/train steps below would just crash. Stop here with directions
+    # instead; `make setup` re-runs this script and picks up where we left off.
+    if "RASA_LICENSE" in missing:
+        print(LICENSE_BANNER)
+        return
+
     ides = resolve_ides(args.ides, detect_ides(), args.yes, _prompt_ides)
     _run(skills_command(ides), proj)
 
     if args.skip_train:
         print("Skipping `rasa train` (--skip-train).")
+        next_step = "make inspect"
+    elif llm_key in missing:
+        print("! %s is not set -- skipping the initial model training." % llm_key)
+        next_step = "add %s to .env, then: make train && make inspect" % llm_key
     else:
         _run(train_command(), proj)
-    print("\nSetup complete. Try: make inspect")
+        next_step = "make inspect"
+    print("\nSetup complete. Next: %s" % next_step)
 
 
 if __name__ == "__main__":

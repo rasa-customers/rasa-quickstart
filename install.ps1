@@ -110,6 +110,5 @@ if (-not $DryRun) {
     Write-Output ""
     Write-Output "Done. Next:"
     Write-Output "  cd $Target"
-    Write-Output "  # add RASA_LICENSE and your LLM key to .env, then:"
-    Write-Output "  make inspect"
+    Write-Output "  make inspect   # or: make setup, if you still need to add keys to .env"
 }

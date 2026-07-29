@@ -181,7 +181,7 @@ def test_resolve_ides_prompt_eof_no_detected_uses_default():
 def test_ensure_env_creates_from_example(tmp_path):
     (tmp_path / ".env.example").write_text("RASA_LICENSE=\nOPENAI_API_KEY=\n")
     created, missing = setup.ensure_env(
-        str(tmp_path), ["RASA_LICENSE", "OPENAI_API_KEY"]
+        str(tmp_path), ["RASA_LICENSE", "OPENAI_API_KEY"], environ={}
     )
     assert created is True
     assert (tmp_path / ".env").exists()
@@ -192,7 +192,7 @@ def test_ensure_env_existing_is_untouched(tmp_path):
     (tmp_path / ".env.example").write_text("RASA_LICENSE=\n")
     (tmp_path / ".env").write_text("RASA_LICENSE=abc\nOPENAI_API_KEY=xyz\n")
     created, missing = setup.ensure_env(
-        str(tmp_path), ["RASA_LICENSE", "OPENAI_API_KEY"]
+        str(tmp_path), ["RASA_LICENSE", "OPENAI_API_KEY"], environ={}
     )
     assert created is False
     assert missing == []
@@ -203,14 +203,29 @@ def test_ensure_env_reports_absent_and_empty_keys(tmp_path):
     (tmp_path / ".env.example").write_text("RASA_LICENSE=\n")
     (tmp_path / ".env").write_text("RASA_LICENSE=abc\nOPENAI_API_KEY=\n")
     _, missing = setup.ensure_env(
-        str(tmp_path), ["RASA_LICENSE", "OPENAI_API_KEY", "OTHER"]
+        str(tmp_path), ["RASA_LICENSE", "OPENAI_API_KEY", "OTHER"], environ={}
     )
     assert missing == ["OPENAI_API_KEY", "OTHER"]
 
 
+def test_ensure_env_environment_variable_counts_as_set(tmp_path):
+    # CI passes RASA_LICENSE as an env var instead of writing it to .env.
+    (tmp_path / ".env.example").write_text("RASA_LICENSE=\n")
+    _, missing = setup.ensure_env(
+        str(tmp_path), ["RASA_LICENSE"], environ={"RASA_LICENSE": "abc"}
+    )
+    assert missing == []
+
+
+def test_license_banner_is_actionable():
+    assert setup.LICENSE_URL in setup.LICENSE_BANNER
+    assert "RASA_LICENSE" in setup.LICENSE_BANNER
+    assert "make setup" in setup.LICENSE_BANNER
+
+
 def test_ensure_env_without_example_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
-        setup.ensure_env(str(tmp_path), ["RASA_LICENSE"])
+        setup.ensure_env(str(tmp_path), ["RASA_LICENSE"], environ={})
 
 
 # --- provider helpers --------------------------------------------------------
