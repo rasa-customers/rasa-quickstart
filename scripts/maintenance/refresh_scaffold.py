@@ -66,10 +66,14 @@ def differing_files(generated_dir, template_dir):
 def generate_scaffold(dest, rasa_bin):
     dest = pathlib.Path(dest)
     dest.mkdir(parents=True, exist_ok=True)
+    # No --no-prompt: it force-trains the initial model (needs an LLM key).
+    # Answer "n" to the training prompt instead; --init-dir on an empty
+    # directory skips every other prompt.
     subprocess.run(
-        [*rasa_bin, "init", "--template", "default", "--init-dir", str(dest),
-         "--no-prompt"],
+        [*rasa_bin, "init", "--template", "default", "--init-dir", str(dest)],
         check=True,
+        input="n\n",
+        text=True,
     )
     for junk in _SKIP_DIRS:
         shutil.rmtree(dest / junk, ignore_errors=True)
@@ -88,7 +92,9 @@ def apply_changes(generated_dir, template_dir, paths):
             # Keep the committed assistant_id to avoid churn.
             old = _ASSISTANT_ID_RE.search(dst.read_text())
             if old:
-                text = _ASSISTANT_ID_RE.sub(old.group(0), text)
+                # lambda: the matched line must be literal, not a re template
+                # (a backslash in the id would be interpreted as an escape).
+                text = _ASSISTANT_ID_RE.sub(lambda _: old.group(0), text)
         dst.write_text(text)
 
 
