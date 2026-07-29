@@ -15,7 +15,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Ruff (lint Python)
-        run: uvx ruff check template/scripts scripts tests
+        # Pinned: ruff 0.16 expanded the default rule set and fails this repo.
+        run: uvx ruff@0.15.0 check template/scripts scripts tests
 
       - name: ShellCheck (install.sh)
         run: shellcheck install.sh
