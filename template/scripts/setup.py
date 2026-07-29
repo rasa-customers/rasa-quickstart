@@ -61,12 +61,10 @@ PROVIDER_PRESETS = {
     "anthropic": {
         "group_id": "anthropic-claude",
         "env_key": "ANTHROPIC_API_KEY",
-        # NOTE: model string not yet verified end-to-end against a live
-        # Anthropic key; adjust to the current Claude model as needed.
         "models": [
             {
                 "provider": "anthropic",
-                "model": "claude-sonnet-4-5-20250929",
+                "model": "claude-opus-5",
                 "timeout": 15,
             }
         ],

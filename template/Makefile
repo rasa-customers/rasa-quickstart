@@ -26,11 +26,11 @@ validate: ## Validate flows / domain / config
 run: ## Run the Rasa API server
 	uv run rasa run --enable-api --cors "*"
 
-actions: ## Run the custom action server
+actions: ## Run a standalone action server (not needed by default: endpoints.yml runs actions in-process)
 	uv run rasa run actions
 
 inspect: ## Open the CALM inspector (browser debugger)
-	uv run rasa inspect --nextgen --cors "*"
+	uv run rasa inspect --cors "*"
 
 shell: ## Chat with the assistant in the terminal
 	uv run rasa shell

@@ -13,6 +13,7 @@ models/
 .claude/
 .cursor/
 .vscode/
+.github/skills/
 .idea/
 
 # Python

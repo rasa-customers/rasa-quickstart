@@ -91,7 +91,7 @@ On Windows, run the downloaded script with arguments:
 
 | Flag | Values | Default |
 |---|---|---|
-| `--ides` | `claude`, `cursor`, `vscode`, `jetbrains` (comma-separated) | auto-detected, then prompted |
+| `--ides` | `claude`, `cursor`, `vscode` (comma-separated) | auto-detected, then prompted |
 | `--provider` | `openai`, `anthropic` | `openai` |
 | `--yes` | accept detected defaults, no prompts | off |
 | `--skip-train` | skip the initial model training | off |
@@ -104,15 +104,17 @@ On Windows, run the downloaded script with arguments:
 The bootstrap delivers the project in [`template/`](template/):
 
 ```
-config.yml          CALM pipeline + LLM model group
+config.yml          CALM pipeline (references the LLM model group)
 domain/             responses, slots, actions
 data/flows/         conversation flows (business logic)
 actions/            custom Python actions
 endpoints.yml       action server, tracker store, model groups
 credentials.yml     chat / voice channels
 e2e_tests/          end-to-end conversation tests
+db/                 sample data for the demo actions
 Makefile            setup / run / inspect / train / ...
 scripts/setup.py    one-shot provisioning
+pyproject.toml      pinned Rasa Pro dependency (uv-managed)
 .env.example        secrets template (copy to .env)
 ```
 
