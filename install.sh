@@ -127,5 +127,11 @@ if [ -z "$DRY_RUN" ]; then
   echo ""
   echo "Done. Next:"
   echo "  cd $TARGET"
-  echo "  make inspect   # or: make setup, if you still need to add keys to .env"
+  # A trained model means setup ran to completion; otherwise setup stopped
+  # early (missing keys — see its message above) and `make setup` resumes it.
+  if ls "$TARGET"/models/*.tar.gz >/dev/null 2>&1; then
+    echo "  make inspect"
+  else
+    echo "  make setup     # finishes setup — see the notes above for what's missing"
+  fi
 fi
