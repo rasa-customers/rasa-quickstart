@@ -111,7 +111,7 @@ if (-not $DryRun) {
     Write-Output "Done. Next:"
     Write-Output "  cd $Target"
     # A trained model means setup ran to completion; otherwise setup stopped
-    # early (missing keys — see its message above) and `make setup` resumes it.
+    # early (missing keys - see its message above) and `make setup` resumes it.
     if (Test-Path (Join-Path $Target "models/*.tar.gz")) {
         Write-Output "  make inspect"
     }
