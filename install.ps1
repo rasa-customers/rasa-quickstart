@@ -116,6 +116,7 @@ if (-not $DryRun) {
         Write-Output "  make inspect"
     }
     else {
-        Write-Output "  make setup     # finishes setup - see the notes above for what's missing"
+        Write-Output "  # add the missing keys to .env (see the notes above), then:"
+        Write-Output "  make setup"
     }
 }

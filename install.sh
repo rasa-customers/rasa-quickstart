@@ -132,6 +132,7 @@ if [ -z "$DRY_RUN" ]; then
   if ls "$TARGET"/models/*.tar.gz >/dev/null 2>&1; then
     echo "  make inspect"
   else
-    echo "  make setup     # finishes setup — see the notes above for what's missing"
+    echo "  # add the missing keys to .env (see the notes above), then:"
+    echo "  make setup"
   fi
 fi
