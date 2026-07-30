@@ -172,7 +172,7 @@ def provider_env_key(provider):
     return PROVIDER_PRESETS[provider]["env_key"]
 
 
-LICENSE_URL = "https://rasa.com/docs/rasa-pro/developer-edition/"
+LICENSE_URL = "https://rasa.com/rasa-pro-developer-edition-license-key-request"
 
 # ASCII only: Windows consoles default to cp1252 and crash on fancier art.
 LICENSE_BANNER = r"""
@@ -186,7 +186,7 @@ LICENSE_BANNER = r"""
   |                                                                   |
   |    Get a FREE Rasa Pro Developer Edition license:                 |
   |                                                                   |
-  |      >>   https://rasa.com/docs/rasa-pro/developer-edition/       |
+  |  https://rasa.com/rasa-pro-developer-edition-license-key-request  |
   |                                                                   |
   |    Paste it into .env as RASA_LICENSE (plus your LLM key),        |
   |    then finish with:                                              |

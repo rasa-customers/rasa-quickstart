@@ -16,7 +16,7 @@ with a single command. No cloning, no setup steps.
 <br>
 
 [![Docs](https://img.shields.io/badge/Docs-5A17EE?style=for-the-badge&logo=readthedocs&logoColor=white)](https://rasa.com/docs/)
-[![Developer Edition](https://img.shields.io/badge/Developer%20Edition-Free-5A17EE?style=for-the-badge&logo=rasa&logoColor=white)](https://rasa.com/docs/rasa-pro/developer-edition/)
+[![Developer Edition](https://img.shields.io/badge/Developer%20Edition-Free-5A17EE?style=for-the-badge&logo=rasa&logoColor=white)](https://rasa.com/rasa-pro-developer-edition-license-key-request)
 [![Learning](https://img.shields.io/badge/Learning-5A17EE?style=for-the-badge&logo=bookstack&logoColor=white)](https://learning.rasa.com/rasa-pro/)
 [![Community](https://img.shields.io/badge/Discord-5A17EE?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/rwhHg9PZBv)
 
@@ -28,7 +28,7 @@ with a single command. No cloning, no setup steps.
 
 ### 1. Grab your two keys
 
-- 🔑 **Rasa license** — free with the [**Rasa Developer Edition**](https://rasa.com/docs/rasa-pro/developer-edition/). Sign up and you'll get a license key.
+- 🔑 **Rasa license** — free with the [**Rasa Developer Edition**](https://rasa.com/rasa-pro-developer-edition-license-key-request). Sign up and you'll get a license key.
 - 🤖 **LLM API key** — an [**OpenAI API key**](https://platform.openai.com/api-keys) by default (Rasa supports other providers too).
 
 ### 2. Run the bootstrap
@@ -126,7 +126,7 @@ See [`template/README.md`](template/README.md) for the day-to-day building guide
 
 ## 🧰 What you'll need
 
-- 🔑 A **free [Rasa Developer Edition license](https://rasa.com/docs/rasa-pro/developer-edition/)** → `RASA_LICENSE` in `.env`
+- 🔑 A **free [Rasa Developer Edition license](https://rasa.com/rasa-pro-developer-edition-license-key-request)** → `RASA_LICENSE` in `.env`
 - 🤖 An **OpenAI API key** (the default provider — Rasa supports other LLMs too) → `OPENAI_API_KEY` in `.env`
 - ⚡ [**`uv`**](https://docs.astral.sh/uv/) — installed automatically by the bootstrap; it also handles the right Python version
 
