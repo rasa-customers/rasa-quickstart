@@ -16,10 +16,10 @@ No cloning, no setup steps.
 
 <br>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Docs-FAF6F0?style=for-the-badge&logo=readthedocs&logoColor=181210"><a href="https://mantle.rasa.com"><img alt="Docs" src="https://img.shields.io/badge/Docs-181210?style=for-the-badge&logo=readthedocs&logoColor=FAF6F0"></a></picture>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Developer%20Edition-Free-E85A91?style=for-the-badge&labelColor=FAF6F0"><a href="https://rasa.com/rasa-pro-developer-edition-license-key-request"><img alt="Developer Edition" src="https://img.shields.io/badge/Developer%20Edition-Free-E85A91?style=for-the-badge&labelColor=181210"></a></picture>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Learning-FAF6F0?style=for-the-badge&logo=bookstack&logoColor=181210"><a href="https://learning.rasa.com/rasa-pro/"><img alt="Learning" src="https://img.shields.io/badge/Learning-181210?style=for-the-badge&logo=bookstack&logoColor=FAF6F0"></a></picture>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Discord-FAF6F0?style=for-the-badge&logo=discord&logoColor=181210"><a href="https://discord.gg/rwhHg9PZBv"><img alt="Community" src="https://img.shields.io/badge/Discord-181210?style=for-the-badge&logo=discord&logoColor=FAF6F0"></a></picture>
+[![Docs](https://img.shields.io/badge/Docs-181210?style=for-the-badge&logo=readthedocs&logoColor=FAF6F0)](https://mantle.rasa.com#gh-light-mode-only)[![Docs](https://img.shields.io/badge/Docs-FAF6F0?style=for-the-badge&logo=readthedocs&logoColor=181210)](https://mantle.rasa.com#gh-dark-mode-only)
+[![Developer Edition](https://img.shields.io/badge/Developer%20Edition-Free-E85A91?style=for-the-badge&labelColor=181210)](https://rasa.com/rasa-pro-developer-edition-license-key-request#gh-light-mode-only)[![Developer Edition](https://img.shields.io/badge/Developer%20Edition-Free-E85A91?style=for-the-badge&labelColor=FAF6F0)](https://rasa.com/rasa-pro-developer-edition-license-key-request#gh-dark-mode-only)
+[![Learning](https://img.shields.io/badge/Learning-181210?style=for-the-badge&logo=bookstack&logoColor=FAF6F0)](https://learning.rasa.com/rasa-pro/#gh-light-mode-only)[![Learning](https://img.shields.io/badge/Learning-FAF6F0?style=for-the-badge&logo=bookstack&logoColor=181210)](https://learning.rasa.com/rasa-pro/#gh-dark-mode-only)
+[![Community](https://img.shields.io/badge/Discord-181210?style=for-the-badge&logo=discord&logoColor=FAF6F0)](https://discord.gg/rwhHg9PZBv#gh-light-mode-only)[![Community](https://img.shields.io/badge/Discord-FAF6F0?style=for-the-badge&logo=discord&logoColor=181210)](https://discord.gg/rwhHg9PZBv#gh-dark-mode-only)
 
 </div>
 
@@ -165,7 +165,7 @@ The pinned Rasa version tracks the latest release over time; the committed scaff
 
 <a href="https://rasa.com/connect-with-rasa"><img alt="Book a demo" src="https://img.shields.io/badge/%F0%9F%93%85%20Book%20a%20demo-E85A91?style=for-the-badge"></a>
 &nbsp;&nbsp;
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/%F0%9F%93%96%20Read%20the%20docs-FAF6F0?style=for-the-badge"><a href="https://mantle.rasa.com"><img alt="Read the docs" src="https://img.shields.io/badge/%F0%9F%93%96%20Read%20the%20docs-181210?style=for-the-badge"></a></picture>
+[![Read the docs](https://img.shields.io/badge/%F0%9F%93%96%20Read%20the%20docs-181210?style=for-the-badge)](https://mantle.rasa.com#gh-light-mode-only)[![Read the docs](https://img.shields.io/badge/%F0%9F%93%96%20Read%20the%20docs-FAF6F0?style=for-the-badge)](https://mantle.rasa.com#gh-dark-mode-only)
 
 <sub>Built with ❤️ by the Rasa team · <a href="https://rasa.com/">rasa.com</a> · <a href="https://discord.gg/rwhHg9PZBv">Discord community</a></sub>
 
