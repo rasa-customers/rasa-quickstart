@@ -7,15 +7,16 @@
 
 # Rasa Quickstart
 
-### A production-ready Rasa Pro (CALM) agent, in one command.
+### A Rasa Mantle agent, in one command.
 
-Bootstrap a fresh **[Rasa Pro](https://rasa.com/docs/learn/concepts/calm/)** assistant —
-CALM scaffold, a trained model, and coding-agent skills wired into your editor —
-with a single command. No cloning, no setup steps.
+Bootstrap a fresh **[Rasa Mantle](https://mantle.rasa.com)** agent — Rasa's
+LLM-native engine — with a skills scaffold, a trained model, and coding-agent
+skills, MCP tools, and docs wired into your editor, in a single command.
+No cloning, no setup steps.
 
 <br>
 
-[![Docs](https://img.shields.io/badge/Docs-5A17EE?style=for-the-badge&logo=readthedocs&logoColor=white)](https://rasa.com/docs/)
+[![Docs](https://img.shields.io/badge/Docs-5A17EE?style=for-the-badge&logo=readthedocs&logoColor=white)](https://mantle.rasa.com)
 [![Developer Edition](https://img.shields.io/badge/Developer%20Edition-Free-5A17EE?style=for-the-badge&logo=rasa&logoColor=white)](https://rasa.com/rasa-pro-developer-edition-license-key-request)
 [![Learning](https://img.shields.io/badge/Learning-5A17EE?style=for-the-badge&logo=bookstack&logoColor=white)](https://learning.rasa.com/rasa-pro/)
 [![Community](https://img.shields.io/badge/Discord-5A17EE?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/rwhHg9PZBv)
@@ -47,8 +48,9 @@ irm https://raw.githubusercontent.com/rasa-customers/rasa-quickstart/main/instal
 
 This installs [`uv`](https://docs.astral.sh/uv/), downloads the project into a new
 `rasa-quickstart/` folder, and sets up the virtual environment. With your keys
-already in place it also installs coding-agent skills and trains an initial
-model; without them, it pauses and tells you what to grab.
+already in place it also installs the Mantle coding-agent skills, registers the
+Rasa MCP server, downloads the Mantle docs, and trains an initial model; without
+them, it pauses and tells you what to grab.
 
 ### 3. Add your keys to `.env`
 
@@ -66,12 +68,12 @@ OPENAI_API_KEY=your-openai-key
 ### 4. Finish setup and talk to your agent
 
 ```bash
-make setup      # picks up your keys: installs skills + trains the first model
+make setup      # picks up your keys: installs skills + docs, trains the first model
 make inspect
 ```
 
-This opens the inspector in your browser, where you can chat with your assistant
-and watch its reasoning live.
+This opens the Inspector in your browser, where you can chat with your agent
+and watch its reasoning live. Try *"Show me my recent transactions."*
 
 ---
 
@@ -93,7 +95,7 @@ On Windows, run the downloaded script with arguments:
 
 | Flag | Values | Default |
 |---|---|---|
-| `--ides` | `claude`, `cursor`, `vscode` (comma-separated) | auto-detected, then prompted |
+| `--ides` | `claude`, `cursor`, `vscode`, `jetbrains` (comma-separated) | auto-detected, then prompted |
 | `--provider` | `openai`, `anthropic` | `openai` |
 | `--yes` | accept detected defaults, no prompts | off |
 | `--skip-train` | skip the initial model training | off |
@@ -106,17 +108,13 @@ On Windows, run the downloaded script with arguments:
 The bootstrap delivers the project in [`template/`](template/):
 
 ```
-config.yml          CALM pipeline (references the LLM model group)
-domain/             responses, slots, actions
-data/flows/         conversation flows (business logic)
-actions/            custom Python actions
-endpoints.yml       action server, tracker store, model groups
-credentials.yml     chat / voice channels
-e2e_tests/          end-to-end conversation tests
-db/                 sample data for the demo actions
+agent.yml           identity, persona, global rules
+integrations.yml    LLM model groups, channels, optional MCP servers / tracing
+skills/             one folder per skill: skill.md + memory.yml + tools.py
+AGENTS.md           context for your coding agent (Mantle, not CALM)
 Makefile            setup / run / inspect / train / ...
 scripts/setup.py    one-shot provisioning
-pyproject.toml      pinned Rasa Pro dependency (uv-managed)
+pyproject.toml      pinned rasa-pro dependency (3.20.x, uv-managed)
 .env.example        secrets template (copy to .env)
 ```
 
@@ -155,7 +153,7 @@ This repo is a source/template — most of it never lands on your machine:
 
 **Contributing:** run the checks with
 `uv run --with pytest --with ruamel.yaml python -m pytest tests/`.
-The pinned Rasa version tracks the latest release over time; the committed scaffold in `template/` is kept in sync by automation.
+The pinned Rasa version tracks the latest release over time; the committed scaffold in `template/` is kept in sync with `rasa init --engine mantle` by automation.
 
 **License:** this repo (scaffold, scripts, docs) is [Apache-2.0](LICENSE). Rasa Pro itself is not part of this repo — the setup installs it from PyPI, governed by the [Developer Terms](https://rasa.com/developer-terms) and your license key.
 
@@ -167,7 +165,7 @@ The pinned Rasa version tracks the latest release over time; the committed scaff
 
 [![Book a demo](https://img.shields.io/badge/📅%20Book%20a%20demo-5A17EE?style=for-the-badge)](https://rasa.com/connect-with-rasa)
 &nbsp;&nbsp;
-[![Read the docs](https://img.shields.io/badge/📖%20Read%20the%20docs-24292F?style=for-the-badge)](https://rasa.com/docs/)
+[![Read the docs](https://img.shields.io/badge/📖%20Read%20the%20docs-24292F?style=for-the-badge)](https://mantle.rasa.com)
 
 <sub>Built with ❤️ by the Rasa team · <a href="https://rasa.com/">rasa.com</a> · <a href="https://discord.gg/rwhHg9PZBv">Discord community</a></sub>
 

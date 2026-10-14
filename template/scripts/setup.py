@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Provision this Rasa Quickstart project.
+"""Provision this Rasa Quickstart (Mantle) project.
 
 Runs via `uv run python scripts/setup.py` (or `make setup`). Idempotent.
 
 Steps: ensure `.env` exists -> `uv sync` -> apply the chosen LLM provider ->
-install coding-agent skills -> train an initial model.
+wire up coding agents (MCP server, Mantle skills, local Mantle docs) ->
+train an initial model.
 
 Flags let the bootstrap (or a future install-builder) drive it unattended;
 omitted flags fall back to interactive prompts:
@@ -12,6 +13,8 @@ omitted flags fall back to interactive prompts:
     --ides claude,cursor,vscode,jetbrains   which coding agents to wire up
     --provider openai|anthropic             LLM provider (default: openai)
     --yes                                   accept detected defaults, no prompts
+    --skip-train                            skip the final `rasa train`
+    --skills-only                           only (re)wire coding agents
     --project-path PATH                     project dir (default: current dir)
 """
 
@@ -19,8 +22,6 @@ import argparse
 import io
 import os
 import pathlib
-import random
-import re
 import shutil
 import subprocess
 import sys
@@ -47,27 +48,26 @@ IDE_SIGNATURES = {
     },
 }
 
+# Models for the orchestrator model group in integrations.yml. The openai
+# preset mirrors what the scaffold ships, so choosing it rewrites nothing.
 PROVIDER_PRESETS = {
     "openai": {
-        "group_id": "openai-gpt-5-1",
         "env_key": "OPENAI_API_KEY",
         "models": [
             {
                 "provider": "openai",
-                "model": "gpt-5.1-2025-11-13",
-                "reasoning_effort": "none",
-                "timeout": 15,
+                "model": "gpt-5.2",
+                "api_key_env": "OPENAI_API_KEY",
             }
         ],
     },
     "anthropic": {
-        "group_id": "anthropic-claude",
         "env_key": "ANTHROPIC_API_KEY",
         "models": [
             {
                 "provider": "anthropic",
                 "model": "claude-opus-5",
-                "timeout": 15,
+                "api_key_env": "ANTHROPIC_API_KEY",
             }
         ],
     },
@@ -85,6 +85,8 @@ def parse_args(argv):
                         help="Accept detected defaults; no prompts")
     parser.add_argument("--skip-train", dest="skip_train", action="store_true",
                         help="Skip the final `rasa train` (e.g. for CI)")
+    parser.add_argument("--skills-only", dest="skills_only", action="store_true",
+                        help="Only (re)install coding-agent skills, MCP + docs")
     parser.add_argument("--project-path", dest="project_path", default=".",
                         help="Project directory (default: current dir)")
     return parser.parse_args(argv)
@@ -197,56 +199,6 @@ LICENSE_BANNER = r"""
 """
 
 
-# --- assistant id ------------------------------------------------------------
-
-# Must match the assistant_id shipped in template/config.yml (a test enforces
-# this). Every bootstrap replaces it with a random one so deployments are
-# distinguishable in telemetry/tracing; ids a user chose are never touched.
-DEFAULT_ASSISTANT_ID = "piercing-heap"
-
-_ASSISTANT_ID_LINE_RE = re.compile(r"(?m)^assistant_id:\s*(\S+)\s*$")
-
-_ID_ADJECTIVES = [
-    "amber", "bold", "brisk", "calm", "clever", "cosmic", "deft", "eager",
-    "fabled", "gentle", "keen", "lively", "lunar", "mellow", "nimble",
-    "polar", "quiet", "rapid", "solar", "sturdy", "swift", "tidal",
-    "vivid", "witty",
-]
-
-_ID_NOUNS = [
-    "anchor", "beacon", "canyon", "comet", "condor", "dolphin", "ember",
-    "falcon", "garden", "glacier", "harbor", "heron", "lantern", "meadow",
-    "nebula", "orchard", "osprey", "pines", "quartz", "river", "sparrow",
-    "summit", "tundra", "willow",
-]
-
-
-def random_assistant_id(rng=random):
-    return "%s-%s-%04x" % (
-        rng.choice(_ID_ADJECTIVES),
-        rng.choice(_ID_NOUNS),
-        rng.randrange(16 ** 4),
-    )
-
-
-def ensure_assistant_id(project_path, rng=random):
-    """Replace the template's default assistant_id with a random one.
-
-    Returns the new id, or None if the id was already customized (idempotent:
-    re-running `make setup` never overwrites an assigned or user-chosen id).
-    """
-    config_file = pathlib.Path(project_path) / "config.yml"
-    text = config_file.read_text()
-    match = _ASSISTANT_ID_LINE_RE.search(text)
-    if not match or match.group(1) != DEFAULT_ASSISTANT_ID:
-        return None
-    new_id = random_assistant_id(rng)
-    config_file.write_text(
-        text[: match.start()] + "assistant_id: " + new_id + text[match.end():]
-    )
-    return new_id
-
-
 # --- provider config rewrite -------------------------------------------------
 
 _YAML = None
@@ -261,6 +213,8 @@ def _yaml_engine():
 
         _YAML = YAML()
         _YAML.preserve_quotes = True
+        # Match the scaffold's list style ("  - id: ...") so rewrites stay tidy.
+        _YAML.indent(mapping=2, sequence=4, offset=2)
     return _YAML
 
 
@@ -274,20 +228,25 @@ def _dump_yaml(data):
     return buf.getvalue()
 
 
-def set_pipeline_model_group(config_text, group_id):
-    data = _load_yaml(config_text)
-    for step in data.get("pipeline", []):
-        if isinstance(step, dict) and "llm" in step and "model_group" in step["llm"]:
-            step["llm"]["model_group"] = group_id
-    return _dump_yaml(data)
+DEFAULT_MODEL_GROUP = "orchestrator"
 
 
-def set_model_groups(endpoints_text, provider):
-    data = _load_yaml(endpoints_text)
-    preset = PROVIDER_PRESETS[provider]
-    data["model_groups"] = [
-        {"id": preset["group_id"], "models": [dict(m) for m in preset["models"]]}
-    ]
+def set_orchestrator_models(integrations_text, provider):
+    """Point the orchestrator model group at the provider's models.
+
+    The group keeps its id (whatever `llm.model_group` names), so nothing else
+    in the project needs to change; other model groups are left alone.
+    """
+    data = _load_yaml(integrations_text)
+    group_id = (data.get("llm") or {}).get("model_group") or DEFAULT_MODEL_GROUP
+    models = [dict(m) for m in PROVIDER_PRESETS[provider]["models"]]
+    groups = data.setdefault("model_groups", [])
+    for group in groups:
+        if group.get("id") == group_id:
+            group["models"] = models
+            break
+    else:
+        groups.append({"id": group_id, "models": models})
     return _dump_yaml(data)
 
 
@@ -295,12 +254,10 @@ def apply_provider(project_path, provider):
     # The scaffold already ships the OpenAI model group; nothing to rewrite.
     if provider == "openai":
         return False
-    proj = pathlib.Path(project_path)
-    config_file = proj / "config.yml"
-    endpoints_file = proj / "endpoints.yml"
-    group_id = PROVIDER_PRESETS[provider]["group_id"]
-    config_file.write_text(set_pipeline_model_group(config_file.read_text(), group_id))
-    endpoints_file.write_text(set_model_groups(endpoints_file.read_text(), provider))
+    integrations_file = pathlib.Path(project_path) / "integrations.yml"
+    integrations_file.write_text(
+        set_orchestrator_models(integrations_file.read_text(), provider)
+    )
     return True
 
 
@@ -310,9 +267,25 @@ def uv_sync_command():
     return ["uv", "sync"]
 
 
-def skills_command(ides):
-    return ["uv", "run", "rasa", "tools", "init", "skills", "--yes",
+def mcp_command(ides):
+    # Registers the rasa-tools MCP server (train, validate, simulate/evaluate)
+    # with each coding agent.
+    return ["uv", "run", "rasa", "tools", "init", "--yes",
             "--ides", ",".join(ides)]
+
+
+def skills_command(ides):
+    return ["uv", "run", "rasa", "skills", "install", "mantle", "--yes",
+            "--ides", ",".join(ides)]
+
+
+def docs_command():
+    # Local copy of the Mantle docs under .rasa/docs/mantle/ (see AGENTS.md).
+    return ["uv", "run", "rasa", "tools", "init", "docs", "mantle", "--yes"]
+
+
+def coding_agent_commands(ides):
+    return [mcp_command(ides), skills_command(ides), docs_command()]
 
 
 def train_command():
@@ -336,7 +309,7 @@ def _run(cmd, cwd):
 
 def _prompt_ides(default):
     message = (
-        "Install Rasa skills + MCP for which coding agents?\n"
+        "Install Mantle skills + MCP for which coding agents?\n"
         "  options: %s\n"
         "  [%s]: " % (", ".join(ALLOWED_IDES), ", ".join(default))
     )
@@ -363,10 +336,6 @@ def main(argv=None):
     if created:
         print("Created .env from .env.example.")
 
-    new_id = ensure_assistant_id(proj)
-    if new_id:
-        print("Assigned assistant_id: %s" % new_id)
-
     _run(uv_sync_command(), proj)
 
     if apply_provider(proj, args.provider):
@@ -380,7 +349,10 @@ def main(argv=None):
         return
 
     ides = resolve_ides(args.ides, detect_ides(), args.yes, _prompt_ides)
-    _run(skills_command(ides), proj)
+    for cmd in coding_agent_commands(ides):
+        _run(cmd, proj)
+    if args.skills_only:
+        return
 
     if args.skip_train:
         print("Skipping `rasa train` (--skip-train).")

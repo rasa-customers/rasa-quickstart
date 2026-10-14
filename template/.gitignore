@@ -8,13 +8,15 @@ models/
 # Secrets — copy .env.example to .env and fill it in
 .env
 
-# Coding-agent / MCP skills, generated at setup by `rasa tools init skills`.
-# Per-developer; recreate with `make setup` or `make skills`.
+# Coding-agent skills + MCP config, generated at setup (`rasa skills install
+# mantle`, `rasa tools init`). Per-developer; recreate with `make skills`.
+# AGENTS.md is committed: it is the project's context for coding agents.
 .claude/
 .cursor/
 .vscode/
 .github/skills/
 .idea/
+.mcp.json
 
 # Python
 __pycache__/
