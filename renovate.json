@@ -4,7 +4,7 @@
   "packageRules": [
     {
       "matchManagers": ["pep621"],
-      "matchPackageNames": ["rasa-pro", "rasa-sdk"],
+      "matchPackageNames": ["rasa-pro"],
       "groupName": "rasa"
     }
   ]

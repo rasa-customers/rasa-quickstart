@@ -1,11 +1,12 @@
 name: scaffold-refresh
 
-# Weekly: regenerate the CALM scaffold with the pinned Rasa version and open a
-# PR if `rasa init`'s output has drifted from the committed template/. Keeps
-# the delivered scaffold in sync with what users actually install.
+# Weekly: re-copy the Mantle scaffold bundled with the pinned Rasa version and
+# open a PR if it has drifted from the committed template/. Keeps the
+# delivered scaffold in sync with what `rasa init --engine mantle` produces.
 #
-# Requires repo secret: RASA_LICENSE
-# Also requires "Allow GitHub Actions to create and approve pull requests".
+# No license needed: the scaffold is copied straight out of the installed
+# rasa-pro package (that is all `rasa init` does before its setup prompts).
+# Requires "Allow GitHub Actions to create and approve pull requests".
 
 on:
   schedule:
@@ -20,39 +21,29 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
-    env:
-      RASA_LICENSE: ${{ secrets.RASA_LICENSE }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86  # v5
 
-      - name: Generate scaffold with the pinned Rasa
-        run: |
-          mkdir -p "$RUNNER_TEMP/gen"
-          # No --no-prompt: it force-trains the initial model, which needs an
-          # OPENAI_API_KEY we don't have (and don't need — only the generated
-          # files matter). Instead answer "n" to the one prompt that fires,
-          # the training question; --init-dir on an empty dir skips the rest.
-          ( cd template && printf 'n\n' | uv run rasa init --template default \
-              --init-dir "$RUNNER_TEMP/gen" )
-          # We don't ship a lockfile; drop the one `uv run` just created.
-          rm -f template/uv.lock
-
       - name: Apply any scaffold changes to template/
         run: |
+          # `uv run --project template` installs the pinned rasa-pro.
           uv run --no-project python scripts/maintenance/refresh_scaffold.py \
-            --generated-dir "$RUNNER_TEMP/gen" --template-dir template --apply
+            --python "uv run --project template python" \
+            --template-dir template --apply
+          # We don't ship a lockfile; drop the one `uv run` just created.
+          rm -f template/uv.lock
 
       - name: Open PR if the scaffold changed
         uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c  # v6
         with:
           branch: automation/scaffold-refresh
-          title: "Refresh scaffold from `rasa init`"
-          commit-message: "Refresh template/ scaffold from `rasa init`"
+          title: "Refresh scaffold from `rasa init --engine mantle`"
+          commit-message: "Refresh template/ scaffold from `rasa init --engine mantle`"
           body: |
-            Automated scaffold refresh: `rasa init --template default` output
-            has drifted from the committed `template/`. Review the diff before
-            merging.
+            Automated scaffold refresh: the Mantle scaffold bundled with the
+            pinned rasa-pro has drifted from the committed `template/`.
+            Review the diff before merging.
           add-paths: template

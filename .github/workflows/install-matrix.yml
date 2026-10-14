@@ -2,7 +2,8 @@ name: install-matrix
 
 # Runs the real bootstrap on every OS against the *current checkout* (via a
 # local tarball, so PRs test their own code, not main). Provisions through
-# `rasa data validate`; training is skipped (no LLM key needed).
+# `rasa data validate` (Mantle validation); training is skipped (no LLM key
+# needed).
 #
 # Requires repo secret: RASA_LICENSE
 
@@ -57,10 +58,13 @@ jobs:
         shell: bash
         working-directory: agent
         run: |
-          for f in config.yml endpoints.yml Makefile pyproject.toml .env .gitignore scripts/setup.py; do
+          for f in agent.yml integrations.yml AGENTS.md skills/view_transactions/skill.md \
+                   Makefile pyproject.toml .env .gitignore scripts/setup.py; do
             test -e "$f" || { echo "missing: $f"; exit 1; }
           done
-          test -d .claude/skills || { echo "skills not installed"; exit 1; }
+          test -d .claude/skills/mantle-building-skills || { echo "Mantle skills not installed"; exit 1; }
+          test -f .mcp.json || { echo "MCP server not registered"; exit 1; }
+          test -f .rasa/docs/mantle/llms.txt || { echo "Mantle docs not fetched"; exit 1; }
           echo "delivered files present"
 
       - name: Validate project

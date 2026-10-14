@@ -6,8 +6,6 @@ subprocess steps (uv sync, rasa ...) are verified by an end-to-end run.
 """
 
 import pathlib
-import random
-import re
 import sys
 
 import pytest
@@ -27,33 +25,29 @@ def _load(text):
     return _yaml.load(StringIO(text))
 
 
-# --- config.yml / endpoints.yml fixtures mirroring the 3.17 scaffold ---------
+# --- integrations.yml fixture mirroring the 3.20 Mantle scaffold -----------
 
-CONFIG_YML = """\
-recipe: default.v1
-assistant_id: piercing-heap
-language: en
-pipeline:
-- name: CompactLLMCommandGenerator
-  llm:
-    model_group: openai-gpt-5-1
-policies:
-- name: FlowPolicy
-"""
+INTEGRATIONS_YML = """\
+# External integrations for your Mantle agent.
 
-ENDPOINTS_YML = """\
-# endpoints
-action_endpoint:
-  actions_module: "actions"
+llm:
+  model_group: orchestrator
 
 model_groups:
-  - id: openai-gpt-5-1
+  - id: orchestrator
     models:
       - provider: openai
-        model: gpt-5.1-2025-11-13
-        reasoning_effort: "none"
-        timeout: 15
+        model: gpt-5.2
+        api_key_env: OPENAI_API_KEY
+
+channels:
+  rest:
+    enabled: true
+  inspector:
+    enabled: true
 """
+
+TEMPLATE_DIR = pathlib.Path(__file__).resolve().parents[1] / "template"
 
 
 # --- parse_args --------------------------------------------------------------
@@ -93,6 +87,11 @@ def test_parse_args_skip_train_default_false():
 
 def test_parse_args_skip_train_flag():
     assert setup.parse_args(["--skip-train"]).skip_train is True
+
+
+def test_parse_args_skills_only_flag():
+    assert setup.parse_args([]).skills_only is False
+    assert setup.parse_args(["--skills-only"]).skills_only is True
 
 
 # --- parse_ides / validate_ides ---------------------------------------------
@@ -230,53 +229,6 @@ def test_ensure_env_without_example_raises(tmp_path):
         setup.ensure_env(str(tmp_path), ["RASA_LICENSE"], environ={})
 
 
-# --- assistant id --------------------------------------------------------------
-
-TEMPLATE_DIR = pathlib.Path(__file__).resolve().parents[1] / "template"
-
-
-def test_default_assistant_id_matches_template():
-    # setup.py gates randomization on the shipped default; keep them in sync.
-    config = (TEMPLATE_DIR / "config.yml").read_text()
-    assert ("assistant_id: %s" % setup.DEFAULT_ASSISTANT_ID) in config
-
-
-def test_random_assistant_id_format():
-    aid = setup.random_assistant_id(random.Random(0))
-    assert re.fullmatch(r"[a-z]+-[a-z]+-[0-9a-f]{4}", aid)
-
-
-def test_ensure_assistant_id_replaces_default(tmp_path):
-    (tmp_path / "config.yml").write_text(
-        "recipe: default.v1\nassistant_id: %s\nlanguage: en\n"
-        % setup.DEFAULT_ASSISTANT_ID
-    )
-    new_id = setup.ensure_assistant_id(str(tmp_path), random.Random(0))
-    text = (tmp_path / "config.yml").read_text()
-    assert new_id is not None
-    assert ("assistant_id: %s" % new_id) in text
-    assert setup.DEFAULT_ASSISTANT_ID not in text
-    # the rest of the file is untouched
-    assert text.startswith("recipe: default.v1\n")
-    assert text.endswith("language: en\n")
-
-
-def test_ensure_assistant_id_keeps_custom_id(tmp_path):
-    (tmp_path / "config.yml").write_text("assistant_id: my-prod-bot\n")
-    assert setup.ensure_assistant_id(str(tmp_path)) is None
-    assert (tmp_path / "config.yml").read_text() == "assistant_id: my-prod-bot\n"
-
-
-def test_ensure_assistant_id_is_idempotent(tmp_path):
-    (tmp_path / "config.yml").write_text(
-        "assistant_id: %s\n" % setup.DEFAULT_ASSISTANT_ID
-    )
-    first = setup.ensure_assistant_id(str(tmp_path), random.Random(1))
-    assert first is not None
-    assert setup.ensure_assistant_id(str(tmp_path), random.Random(2)) is None
-    assert ("assistant_id: %s" % first) in (tmp_path / "config.yml").read_text()
-
-
 # --- provider helpers --------------------------------------------------------
 
 def test_provider_env_key():
@@ -297,10 +249,33 @@ def test_uv_sync_command():
     assert setup.uv_sync_command() == ["uv", "sync"]
 
 
-def test_skills_command_joins_ides():
-    assert setup.skills_command(["claude", "cursor"]) == [
-        "uv", "run", "rasa", "tools", "init", "skills", "--yes",
+def test_mcp_command_joins_ides():
+    assert setup.mcp_command(["claude", "cursor"]) == [
+        "uv", "run", "rasa", "tools", "init", "--yes",
         "--ides", "claude,cursor",
+    ]
+
+
+def test_skills_command_installs_mantle_skills():
+    assert setup.skills_command(["claude", "cursor"]) == [
+        "uv", "run", "rasa", "skills", "install", "mantle", "--yes",
+        "--ides", "claude,cursor",
+    ]
+
+
+def test_docs_command_fetches_mantle_docs():
+    assert setup.docs_command() == [
+        "uv", "run", "rasa", "tools", "init", "docs", "mantle", "--yes",
+    ]
+
+
+def test_coding_agent_commands_order():
+    # MCP first: `rasa tools init` (re)writes .rasa/, docs land beneath it.
+    cmds = setup.coding_agent_commands(["claude"])
+    assert cmds == [
+        setup.mcp_command(["claude"]),
+        setup.skills_command(["claude"]),
+        setup.docs_command(),
     ]
 
 
@@ -310,53 +285,86 @@ def test_train_command():
 
 # --- provider config rewrite -------------------------------------------------
 
-def test_set_pipeline_model_group():
-    out = setup.set_pipeline_model_group(CONFIG_YML, "anthropic-claude")
-    data = _load(out)
-    assert data["pipeline"][0]["llm"]["model_group"] == "anthropic-claude"
-
-
-def test_set_model_groups_openai_keeps_openai():
-    out = setup.set_model_groups(ENDPOINTS_YML, "openai")
-    data = _load(out)
-    assert data["model_groups"][0]["id"] == "openai-gpt-5-1"
-    assert data["model_groups"][0]["models"][0]["provider"] == "openai"
-
-
-def test_set_model_groups_anthropic():
-    out = setup.set_model_groups(ENDPOINTS_YML, "anthropic")
-    data = _load(out)
-    group = data["model_groups"][0]
-    assert group["id"] == setup.PROVIDER_PRESETS["anthropic"]["group_id"]
-    assert group["models"][0]["provider"] == "anthropic"
-    assert group["models"][0]["model"] == (
-        setup.PROVIDER_PRESETS["anthropic"]["models"][0]["model"]
+def test_openai_preset_matches_template():
+    # apply_provider() skips the rewrite for openai, so the shipped scaffold
+    # must already be what the openai preset describes.
+    data = _load((TEMPLATE_DIR / "integrations.yml").read_text())
+    group_id = data["llm"]["model_group"]
+    group = next(g for g in data["model_groups"] if g["id"] == group_id)
+    assert [dict(m) for m in group["models"]] == (
+        setup.PROVIDER_PRESETS["openai"]["models"]
     )
 
 
-def test_set_model_groups_preserves_other_endpoints():
-    out = setup.set_model_groups(ENDPOINTS_YML, "anthropic")
+def test_set_orchestrator_models_anthropic():
+    out = setup.set_orchestrator_models(INTEGRATIONS_YML, "anthropic")
     data = _load(out)
-    assert data["action_endpoint"]["actions_module"] == "actions"
+    assert data["llm"]["model_group"] == "orchestrator"
+    group = data["model_groups"][0]
+    assert group["id"] == "orchestrator"
+    assert group["models"][0]["provider"] == "anthropic"
+    assert group["models"][0]["api_key_env"] == "ANTHROPIC_API_KEY"
+
+
+def test_set_orchestrator_models_follows_llm_reference():
+    text = INTEGRATIONS_YML.replace(
+        "model_group: orchestrator", "model_group: main"
+    ).replace("- id: orchestrator", "- id: main")
+    text += "\nextra_group_marker: true\n"
+    data = _load(setup.set_orchestrator_models(text, "anthropic"))
+    assert [g["id"] for g in data["model_groups"]] == ["main"]
+    assert data["model_groups"][0]["models"][0]["provider"] == "anthropic"
+
+
+def test_set_orchestrator_models_leaves_other_groups():
+    text = INTEGRATIONS_YML.replace(
+        "channels:",
+        "  - id: embeddings\n    models:\n      - provider: openai\n"
+        "        model: text-embedding-3-small\n\nchannels:",
+    )
+    data = _load(setup.set_orchestrator_models(text, "anthropic"))
+    groups = {g["id"]: g for g in data["model_groups"]}
+    assert groups["embeddings"]["models"][0]["provider"] == "openai"
+    assert groups["orchestrator"]["models"][0]["provider"] == "anthropic"
+
+
+def test_set_orchestrator_models_adds_missing_group():
+    text = "llm:\n  model_group: orchestrator\nchannels:\n  rest:\n    enabled: true\n"
+    data = _load(setup.set_orchestrator_models(text, "anthropic"))
+    assert data["model_groups"][0]["id"] == "orchestrator"
+
+
+def test_set_orchestrator_models_preserves_channels():
+    data = _load(setup.set_orchestrator_models(INTEGRATIONS_YML, "anthropic"))
+    assert data["channels"]["rest"]["enabled"] is True
+    assert data["channels"]["inspector"]["enabled"] is True
 
 
 def test_apply_provider_openai_is_noop(tmp_path):
-    (tmp_path / "config.yml").write_text(CONFIG_YML)
-    (tmp_path / "endpoints.yml").write_text(ENDPOINTS_YML)
-    changed = setup.apply_provider(str(tmp_path), "openai")
-    assert changed is False
-    assert (tmp_path / "config.yml").read_text() == CONFIG_YML
-    assert (tmp_path / "endpoints.yml").read_text() == ENDPOINTS_YML
+    (tmp_path / "integrations.yml").write_text(INTEGRATIONS_YML)
+    assert setup.apply_provider(str(tmp_path), "openai") is False
+    assert (tmp_path / "integrations.yml").read_text() == INTEGRATIONS_YML
 
 
-def test_apply_provider_anthropic_rewrites_both_files(tmp_path):
-    (tmp_path / "config.yml").write_text(CONFIG_YML)
-    (tmp_path / "endpoints.yml").write_text(ENDPOINTS_YML)
-    changed = setup.apply_provider(str(tmp_path), "anthropic")
-    assert changed is True
-    cfg = _load((tmp_path / "config.yml").read_text())
-    eps = _load((tmp_path / "endpoints.yml").read_text())
-    group_id = setup.PROVIDER_PRESETS["anthropic"]["group_id"]
-    assert cfg["pipeline"][0]["llm"]["model_group"] == group_id
-    assert eps["model_groups"][0]["id"] == group_id
-    assert eps["model_groups"][0]["models"][0]["provider"] == "anthropic"
+def test_apply_provider_anthropic_rewrites_integrations(tmp_path):
+    (tmp_path / "integrations.yml").write_text(INTEGRATIONS_YML)
+    assert setup.apply_provider(str(tmp_path), "anthropic") is True
+    data = _load((tmp_path / "integrations.yml").read_text())
+    assert data["model_groups"][0]["models"][0]["provider"] == "anthropic"
+
+
+# --- delivered scaffold ------------------------------------------------------
+
+def test_template_is_a_mantle_project():
+    # Rasa picks Mantle when integrations.yml and skills/*/skill.md exist.
+    assert (TEMPLATE_DIR / "agent.yml").is_file()
+    assert (TEMPLATE_DIR / "integrations.yml").is_file()
+    assert list((TEMPLATE_DIR / "skills").glob("*/skill.md"))
+
+
+def test_template_has_no_calm_files():
+    # endpoints.yml at a Mantle project root fails startup; the rest are dead
+    # weight that would mislead coding agents (see AGENTS.md).
+    for name in ["endpoints.yml", "config.yml", "domain.yml", "credentials.yml",
+                 "domain", "data", "actions", "e2e_tests"]:
+        assert not (TEMPLATE_DIR / name).exists(), name
