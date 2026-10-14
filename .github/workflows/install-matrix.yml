@@ -7,10 +7,22 @@ name: install-matrix
 #
 # Requires repo secret: RASA_LICENSE
 
+# Docs-only changes (README styling, logos, license) can't affect the
+# bootstrap, so they skip the matrix. paths-ignore only skips a run when
+# *every* changed file matches. Not a required check, so a skip never blocks
+# a merge; run it by hand via workflow_dispatch if needed.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".github/assets/**"
+      - "LICENSE"
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - ".github/assets/**"
+      - "LICENSE"
   workflow_dispatch:
 
 permissions:
